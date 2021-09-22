@@ -22,6 +22,8 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter
 	/** Class Overrides */
 
 	virtual void BeginPlay() override;
+	virtual void OnJumped_Implementation() override;
+	virtual void Landed(const FHitResult& Hit) override;
 
 	/** Animation */
 

@@ -4,6 +4,8 @@
 
 #include "PaperFlipbookComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 AHopperBaseCharacter::AHopperBaseCharacter()
@@ -25,6 +27,21 @@ void AHopperBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SetReplicateMovement(true);
+}
+
+void AHopperBaseCharacter::OnJumped_Implementation()
+{
+	GetSprite()->SetPlayRate(0.f);
+	GetSprite()->SetPlaybackPositionInFrames(0, true);
+	
+	Super::OnJumped_Implementation();
+}
+
+void AHopperBaseCharacter::Landed(const FHitResult& Hit)
+{
+	GetSprite()->SetPlayRate(1.f);
+
+	Super::Landed(Hit);
 }
 
 void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity)
@@ -49,7 +66,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 
 	SetCurrentAnimationDirection(OldVelocity, ViewInfo);
 
-	if (OldVelocity.Size() > 0.0f)
+	if (OldVelocity.Size() > 0.0f || GetMovementComponent()->IsFalling())
 	{
 		switch (CurrentAnimationDirection)
 		{
@@ -81,7 +98,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 			break;
 		}
 	}
-	else
+	else if (!GetMovementComponent()->IsFalling())
 	{
 		switch (CurrentAnimationDirection)
 		{
@@ -125,7 +142,7 @@ void AHopperBaseCharacter::SetCurrentAnimationDirection(const FVector& Velocity,
 
 	bIsMoving = ForwardSpeed != 0.0f || RightSpeed != 0.0f;
 
-	if (bIsMoving)
+	if (bIsMoving && !GetMovementComponent()->IsFalling())
 	{
 		if (ForwardSpeed > 0.0f && abs(RightSpeed) < 0.5f)
 		{
