@@ -6,11 +6,15 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
 	OnCharacterMovementUpdated.AddDynamic(this, &AHopperBaseCharacter::Animate);
+
+	GetCharacterMovement()->GravityScale = 2.8f;
+	GetCharacterMovement()->JumpZVelocity = 1000.f;
 
 	bReplicates = true;
 
@@ -31,18 +35,62 @@ void AHopperBaseCharacter::BeginPlay()
 
 void AHopperBaseCharacter::OnJumped_Implementation()
 {
+	GetCharacterMovement()->bNotifyApex = true;
+
 	GetSprite()->SetPlayRate(0.f);
 	GetSprite()->SetPlaybackPositionInFrames(0, true);
-	
+
+	JumpCounter++;
+	GetWorldTimerManager().ClearTimer(JumpReset);
+
 	Super::OnJumped_Implementation();
 }
 
 void AHopperBaseCharacter::Landed(const FHitResult& Hit)
 {
 	GetSprite()->SetPlayRate(1.f);
+	GetCharacterMovement()->GravityScale = 2.8f;
 
+	if (JumpCounter > 2)
+		ResetJumpPower();
+
+	ModifyJumpPower();
+	GetWorldTimerManager().SetTimer(JumpReset, this, &AHopperBaseCharacter::ResetJumpPower, 0.2f, false);
+	
 	Super::Landed(Hit);
 }
+
+void AHopperBaseCharacter::NotifyJumpApex()
+{
+	GetCharacterMovement()->GravityScale = 5.f;
+	Super::NotifyJumpApex();
+}
+
+void AHopperBaseCharacter::ModifyJumpPower()
+{
+	switch (JumpCounter)
+	{
+	case 1:
+		GetCharacterMovement()->JumpZVelocity = 1400.f;
+		UE_LOG(LogTemp, Warning, TEXT("Jump Power Level 1"))
+		break;
+	case 2:
+		GetCharacterMovement()->JumpZVelocity = 2000.f;
+		UE_LOG(LogTemp, Warning, TEXT("Jump Power Level 2"))
+		break;
+	default:
+		UE_LOG(LogTemp, Warning, TEXT("Jump Power Level 0"))
+		break;
+	}
+}
+
+void AHopperBaseCharacter::ResetJumpPower()
+{
+	JumpCounter = 0;
+	GetCharacterMovement()->JumpZVelocity = 1000.f;
+	UE_LOG(LogTemp, Warning, TEXT("Jump Power Reset"))
+}
+
 
 void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity)
 {

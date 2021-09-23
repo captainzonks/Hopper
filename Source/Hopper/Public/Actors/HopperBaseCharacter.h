@@ -14,16 +14,22 @@ UCLASS()
 class HOPPER_API AHopperBaseCharacter : public APaperCharacter
 {
 	GENERATED_BODY()
-	
-	public:
+
+public:
 	AHopperBaseCharacter();
 
-	protected:
+protected:
 	/** Class Overrides */
 
 	virtual void BeginPlay() override;
 	virtual void OnJumped_Implementation() override;
 	virtual void Landed(const FHitResult& Hit) override;
+	virtual void NotifyJumpApex() override;
+
+	/** Movement */
+
+	void ModifyJumpPower();
+	void ResetJumpPower();
 
 	/** Animation */
 
@@ -39,5 +45,7 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	FHopperFlipbooks Flipbooks;
-	
+
+	FTimerHandle JumpReset;
+	int JumpCounter{};
 };
