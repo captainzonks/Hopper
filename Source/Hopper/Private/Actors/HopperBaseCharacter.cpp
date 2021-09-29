@@ -71,11 +71,11 @@ void AHopperBaseCharacter::ModifyJumpPower()
 	switch (JumpCounter)
 	{
 	case 1:
-		GetCharacterMovement()->JumpZVelocity = 1400.f;
+		GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[1];
 		UE_LOG(LogTemp, Warning, TEXT("Jump Power Level 1"))
 		break;
 	case 2:
-		GetCharacterMovement()->JumpZVelocity = 2000.f;
+		GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[2];
 		UE_LOG(LogTemp, Warning, TEXT("Jump Power Level 2"))
 		break;
 	default:
@@ -87,7 +87,7 @@ void AHopperBaseCharacter::ModifyJumpPower()
 void AHopperBaseCharacter::ResetJumpPower()
 {
 	JumpCounter = 0;
-	GetCharacterMovement()->JumpZVelocity = 1000.f;
+	GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[0];
 	UE_LOG(LogTemp, Warning, TEXT("Jump Power Reset"))
 }
 

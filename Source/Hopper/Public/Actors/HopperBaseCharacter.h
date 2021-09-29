@@ -48,4 +48,7 @@ protected:
 
 	FTimerHandle JumpReset;
 	int JumpCounter{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	TArray<float> JumpPowerLevels{1400.f, 1800.f, 2200.f};
 };
