@@ -50,5 +50,5 @@ protected:
 	int JumpCounter{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
-	TArray<float> JumpPowerLevels{1400.f, 1800.f, 2200.f};
+	TArray<float> JumpPowerLevels{1200.f, 1400.f, 1800.f};
 };

@@ -14,7 +14,7 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	OnCharacterMovementUpdated.AddDynamic(this, &AHopperBaseCharacter::Animate);
 
 	GetCharacterMovement()->GravityScale = 2.8f;
-	GetCharacterMovement()->JumpZVelocity = 1000.f;
+	GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[0];
 
 	bReplicates = true;
 
@@ -37,9 +37,6 @@ void AHopperBaseCharacter::OnJumped_Implementation()
 {
 	GetCharacterMovement()->bNotifyApex = true;
 
-	GetSprite()->SetPlayRate(0.f);
-	GetSprite()->SetPlaybackPositionInFrames(0, true);
-
 	JumpCounter++;
 	GetWorldTimerManager().ClearTimer(JumpReset);
 
@@ -48,7 +45,6 @@ void AHopperBaseCharacter::OnJumped_Implementation()
 
 void AHopperBaseCharacter::Landed(const FHitResult& Hit)
 {
-	GetSprite()->SetPlayRate(1.f);
 	GetCharacterMovement()->GravityScale = 2.8f;
 
 	if (JumpCounter > 2)
@@ -146,7 +142,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 			break;
 		}
 	}
-	else if (!GetMovementComponent()->IsFalling())
+	else
 	{
 		switch (CurrentAnimationDirection)
 		{
@@ -177,6 +173,16 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 		default:
 			break;
 		}
+	}
+
+	if (GetCharacterMovement()->IsFalling())
+	{
+		GetSprite()->SetPlayRate(0.f);
+		GetSprite()->SetPlaybackPositionInFrames(0, true);
+	}
+	else
+	{
+		GetSprite()->SetPlayRate(1.f);
 	}
 }
 
