@@ -11,6 +11,8 @@
 
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
+	bFootstepGate = true;
+	
 	OnCharacterMovementUpdated.AddDynamic(this, &AHopperBaseCharacter::Animate);
 
 	GetCharacterMovement()->GravityScale = 2.8f;
@@ -24,6 +26,11 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	GetSprite()->SetUsingAbsoluteRotation(true);
 	GetSprite()->SetFlipbook(Flipbooks.IdleDown);
 	GetSprite()->CastShadow = true;
+}
+
+void AHopperBaseCharacter::OpenFootstepGate()
+{
+	bFootstepGate = true;
 }
 
 void AHopperBaseCharacter::BeginPlay()
@@ -52,7 +59,7 @@ void AHopperBaseCharacter::Landed(const FHitResult& Hit)
 
 	ModifyJumpPower();
 	GetWorldTimerManager().SetTimer(JumpReset, this, &AHopperBaseCharacter::ResetJumpPower, 0.2f, false);
-	
+
 	Super::Landed(Hit);
 }
 
@@ -110,7 +117,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 
 	SetCurrentAnimationDirection(OldVelocity, ViewInfo);
 
-	if (OldVelocity.Size() > 0.0f || GetMovementComponent()->IsFalling())
+	if (OldVelocity.Size() > 0.0f || GetCharacterMovement()->IsFalling())
 	{
 		switch (CurrentAnimationDirection)
 		{
@@ -140,6 +147,16 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 			break;
 		default:
 			break;
+		}
+
+		if (!GetCharacterMovement()->IsFalling())
+		{
+			if (bFootstepGate)
+			{
+				bFootstepGate = !bFootstepGate;
+				OnFootstep();
+				GetWorldTimerManager().SetTimer(FootstepTimer, this, &AHopperBaseCharacter::OpenFootstepGate, 0.3f, false);
+			}
 		}
 	}
 	else
@@ -196,7 +213,7 @@ void AHopperBaseCharacter::SetCurrentAnimationDirection(const FVector& Velocity,
 
 	bIsMoving = ForwardSpeed != 0.0f || RightSpeed != 0.0f;
 
-	if (bIsMoving && !GetMovementComponent()->IsFalling())
+	if (bIsMoving && !GetCharacterMovement()->IsFalling())
 	{
 		if (ForwardSpeed > 0.0f && abs(RightSpeed) < 0.5f)
 		{

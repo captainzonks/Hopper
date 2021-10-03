@@ -19,6 +19,11 @@ public:
 	AHopperBaseCharacter();
 
 protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFootstep();
+
+	void OpenFootstepGate();
+
 	/** Class Overrides */
 
 	virtual void BeginPlay() override;
@@ -35,6 +40,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity);
+	
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
@@ -46,8 +52,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	FHopperFlipbooks Flipbooks;
 
+	FTimerHandle FootstepTimer;
 	FTimerHandle JumpReset;
 	int JumpCounter{};
+	uint8 bFootstepGate:1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	TArray<float> JumpPowerLevels{1200.f, 1400.f, 1800.f};
