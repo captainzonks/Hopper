@@ -20,7 +20,7 @@ enum class HopperAnimationDirection : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FHopperFlipbooks
+struct FHopperMovementFlipbooks
 {
 	GENERATED_BODY()
 
@@ -75,4 +75,34 @@ struct FHopperFlipbooks
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UPaperFlipbook> WalkUpLeft;
+};
+
+USTRUCT(BlueprintType)
+struct FHopperPunchFlipbooks
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchDown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchUp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchRight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchLeft;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchDownRight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchDownLeft;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchUpRight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPaperFlipbook> PunchUpLeft;
 };

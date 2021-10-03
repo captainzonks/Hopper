@@ -12,7 +12,8 @@
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
 	bFootstepGate = true;
-	
+	bAttackGate = true;
+
 	OnCharacterMovementUpdated.AddDynamic(this, &AHopperBaseCharacter::Animate);
 
 	GetCharacterMovement()->GravityScale = 2.8f;
@@ -24,13 +25,8 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 
 	GetSprite()->SetRelativeScale3D(FVector(11.f, 11.f, 11.f));
 	GetSprite()->SetUsingAbsoluteRotation(true);
-	GetSprite()->SetFlipbook(Flipbooks.IdleDown);
+	GetSprite()->SetFlipbook(MovementFlipbooks.IdleDown);
 	GetSprite()->CastShadow = true;
-}
-
-void AHopperBaseCharacter::OpenFootstepGate()
-{
-	bFootstepGate = true;
 }
 
 void AHopperBaseCharacter::BeginPlay()
@@ -94,9 +90,76 @@ void AHopperBaseCharacter::ResetJumpPower()
 	UE_LOG(LogTemp, Warning, TEXT("Jump Power Reset"))
 }
 
+void AHopperBaseCharacter::Punch()
+{
+	FVector NewLocation = GetSprite()->GetRelativeLocation();
+	if (bAttackGate)
+	{
+		switch (CurrentAnimationDirection)
+		{
+		case HopperAnimationDirection::Down:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchDown);
+			NewLocation.X -= 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::Up:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchUp);
+			NewLocation.X += 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::Right:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchRight);
+			NewLocation.Y += 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::Left:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchLeft);
+			NewLocation.Y -= 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::DownRight:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchDownRight);
+			NewLocation.X -= 25.f;
+			NewLocation.Y += 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::DownLeft:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchDownLeft);
+			NewLocation.X -= 25.f;
+			NewLocation.Y -= 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::UpRight:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchUpRight);
+			NewLocation.X += 25.f;
+			NewLocation.Y += 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		case HopperAnimationDirection::UpLeft:
+			GetSprite()->SetFlipbook(PunchFlipbooks.PunchUpLeft);
+			NewLocation.X += 25.f;
+			NewLocation.Y -= 25.f;
+			GetSprite()->SetRelativeLocation(NewLocation);
+			break;
+		default:
+			break;
+		}
+
+		bAttackGate = false;
+		GetWorldTimerManager().SetTimer(AttackTimer,
+		                                [this]()
+		                                {
+			                                bAttackGate = true;
+			                                GetSprite()->SetRelativeLocation(FVector::ZeroVector);
+		                                },
+		                                0.3f, false);
+	}
+}
 
 void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity)
 {
+	if (!bAttackGate) return;
+
 	TOptional<FMinimalViewInfo> ViewInfo;
 	if (!IsPlayerControlled())
 	{
@@ -122,28 +185,28 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 		switch (CurrentAnimationDirection)
 		{
 		case HopperAnimationDirection::Up:
-			GetSprite()->SetFlipbook(Flipbooks.WalkUp);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkUp);
 			break;
 		case HopperAnimationDirection::Down:
-			GetSprite()->SetFlipbook(Flipbooks.WalkDown);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkDown);
 			break;
 		case HopperAnimationDirection::Left:
-			GetSprite()->SetFlipbook(Flipbooks.WalkLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkLeft);
 			break;
 		case HopperAnimationDirection::Right:
-			GetSprite()->SetFlipbook(Flipbooks.WalkRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkRight);
 			break;
 		case HopperAnimationDirection::UpLeft:
-			GetSprite()->SetFlipbook(Flipbooks.WalkUpLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkUpLeft);
 			break;
 		case HopperAnimationDirection::UpRight:
-			GetSprite()->SetFlipbook(Flipbooks.WalkUpRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkUpRight);
 			break;
 		case HopperAnimationDirection::DownLeft:
-			GetSprite()->SetFlipbook(Flipbooks.WalkDownLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkDownLeft);
 			break;
 		case HopperAnimationDirection::DownRight:
-			GetSprite()->SetFlipbook(Flipbooks.WalkDownRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.WalkDownRight);
 			break;
 		default:
 			break;
@@ -155,7 +218,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 			{
 				bFootstepGate = !bFootstepGate;
 				OnFootstep();
-				GetWorldTimerManager().SetTimer(FootstepTimer, this, &AHopperBaseCharacter::OpenFootstepGate, 0.3f, false);
+				GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
 			}
 		}
 	}
@@ -164,28 +227,28 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 		switch (CurrentAnimationDirection)
 		{
 		case HopperAnimationDirection::Up:
-			GetSprite()->SetFlipbook(Flipbooks.IdleUp);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleUp);
 			break;
 		case HopperAnimationDirection::Down:
-			GetSprite()->SetFlipbook(Flipbooks.IdleDown);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleDown);
 			break;
 		case HopperAnimationDirection::Left:
-			GetSprite()->SetFlipbook(Flipbooks.IdleLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleLeft);
 			break;
 		case HopperAnimationDirection::Right:
-			GetSprite()->SetFlipbook(Flipbooks.IdleRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleRight);
 			break;
 		case HopperAnimationDirection::UpLeft:
-			GetSprite()->SetFlipbook(Flipbooks.IdleUpLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleUpLeft);
 			break;
 		case HopperAnimationDirection::UpRight:
-			GetSprite()->SetFlipbook(Flipbooks.IdleUpRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleUpRight);
 			break;
 		case HopperAnimationDirection::DownLeft:
-			GetSprite()->SetFlipbook(Flipbooks.IdleDownLeft);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleDownLeft);
 			break;
 		case HopperAnimationDirection::DownRight:
-			GetSprite()->SetFlipbook(Flipbooks.IdleDownRight);
+			GetSprite()->SetFlipbook(MovementFlipbooks.IdleDownRight);
 			break;
 		default:
 			break;
