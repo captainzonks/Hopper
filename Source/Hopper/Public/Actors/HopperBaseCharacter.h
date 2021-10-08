@@ -7,6 +7,8 @@
 #include "Core/HopperData.h"
 #include "HopperBaseCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFootstepSignature);
+
 /**
  * Base character class
  */
@@ -19,12 +21,18 @@ public:
 	AHopperBaseCharacter();
 
 protected:
+	
 	/**
 	 * Called upon movement, with a timer delay of 0.3 seconds.
 	 * Use for footstep sound or particle effects in Blueprints.
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFootstep();
+	void NotifyFootstepTaken();
+
+	/* Broadcast when the Flipbook animation is walking */
+	UPROPERTY(BlueprintAssignable, Category="Character")
+	FFootstepSignature FootstepDelegate;
 
 	/** Class Overrides */
 

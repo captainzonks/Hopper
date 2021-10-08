@@ -29,11 +29,23 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	GetSprite()->CastShadow = true;
 }
 
+void AHopperBaseCharacter::NotifyFootstepTaken()
+{
+	if (bFootstepGate)
+	{
+		bFootstepGate = !bFootstepGate;
+		if (FootstepDelegate.IsBound())
+			FootstepDelegate.Broadcast();
+		GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
+	}
+}
+
 void AHopperBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	SetReplicateMovement(true);
+	FootstepDelegate.AddDynamic(this, &AHopperBaseCharacter::OnFootstep);
 }
 
 void AHopperBaseCharacter::OnJumped_Implementation()
@@ -214,12 +226,7 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 
 		if (!GetCharacterMovement()->IsFalling())
 		{
-			if (bFootstepGate)
-			{
-				bFootstepGate = !bFootstepGate;
-				OnFootstep();
-				GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
-			}
+			NotifyFootstepTaken();
 		}
 	}
 	else
