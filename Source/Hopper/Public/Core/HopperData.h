@@ -4,6 +4,7 @@
 
 #include "HopperData.generated.h"
 
+class AHopperBaseCharacter;
 class UPaperFlipbook;
 
 UENUM(BlueprintType)
@@ -17,6 +18,21 @@ enum class HopperAnimationDirection : uint8
 	DownLeft,
 	UpRight,
 	UpLeft
+};
+
+UENUM(BlueprintType)
+enum class HopperAttackType : uint8
+{
+	Melee
+};
+
+USTRUCT(BlueprintType)
+struct FHopperAttack
+{
+	GENERATED_BODY()
+
+	HopperAttackType AttackType;
+	TObjectPtr<AHopperBaseCharacter> Target;
 };
 
 USTRUCT(BlueprintType)

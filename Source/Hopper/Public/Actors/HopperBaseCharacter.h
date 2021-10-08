@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PaperCharacter.h"
 #include "Core/HopperData.h"
+#include "Interfaces/HopperAttackInterface.h"
 #include "HopperBaseCharacter.generated.h"
 
 class UNiagaraSystem;
@@ -23,6 +24,13 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter
 
 public:
 	AHopperBaseCharacter();
+
+	/** Character Stats */
+	float GetHealth() const { return Health; }
+	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	void DamageHealth(const float Damage);
 
 protected:
 	/**
@@ -94,13 +102,6 @@ protected:
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
 
-	/** Character Stats */
-	float GetHealth() const { return Health; }
-	float GetMaxHealth() const { return MaxHealth; }
-
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void DamageHealth(const float Damage);
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	TObjectPtr<USphereComponent> AttackSphere;
 
@@ -127,6 +128,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	float Health{MaxHealth};
+
+	IHopperAttackInterface* AttackInterface;
 
 	FTimerHandle AttackTimer;
 	FTimerHandle FootstepTimer;

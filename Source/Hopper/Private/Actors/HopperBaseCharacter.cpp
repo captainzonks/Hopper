@@ -12,6 +12,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Core/HopperGameMode.h"
 
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
@@ -40,6 +41,8 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 void AHopperBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AttackInterface = Cast<IHopperAttackInterface>(UGameplayStatics::GetGameMode(this));
 
 	SetReplicateMovement(true);
 	FootstepDelegate.AddDynamic(this, &AHopperBaseCharacter::OnFootstep);
@@ -205,7 +208,12 @@ bool AHopperBaseCharacter::Punch(UNiagaraSystem* SystemToSpawn)
 						SystemToSpawn,
 						HopperEnemy->GetActorLocation());
 				}
-				HopperEnemy->DamageHealth(HopperEnemy->GetMaxHealth() / 3);
+
+				FHopperAttack Attack;
+				Attack.Target = HopperEnemy;
+				Attack.AttackType = HopperAttackType::Melee;
+				AttackInterface->Attack(Attack);
+				// HopperEnemy->DamageHealth(HopperEnemy->GetMaxHealth() / 3);
 			}
 		}
 	}
