@@ -11,6 +11,8 @@ class UNiagaraSystem;
 class USphereComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFootstepSignature);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCharacterDeathSignature);
+
 /**
  * Base character class
  */
@@ -23,7 +25,6 @@ public:
 	AHopperBaseCharacter();
 
 protected:
-	
 	/**
 	 * Called upon movement, with a timer delay of 0.3 seconds.
 	 * Use for footstep sound or particle effects in Blueprints.
@@ -32,9 +33,20 @@ protected:
 	void OnFootstep();
 	void NotifyFootstepTaken();
 
+	/**
+	 * Called when Character dies.
+	 */
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDeath();
+	void CharacterDeath() const;
+
 	/* Broadcast when the Flipbook animation is walking */
 	UPROPERTY(BlueprintAssignable, Category="Character")
 	FFootstepSignature FootstepDelegate;
+
+	/* Broadcast when Character's health reaches 0 */
+	UPROPERTY(BlueprintAssignable, Category="Character")
+	FCharacterDeathSignature CharacterDeathDelegate;
 
 	/** Class Overrides */
 
@@ -81,7 +93,14 @@ protected:
 	 * @param ViewInfo Player's camera information.
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
-	
+
+	/** Character Stats */
+	float GetHealth() const { return Health; }
+	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	void DamageHealth(const float Damage);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	TObjectPtr<USphereComponent> AttackSphere;
 
@@ -99,9 +118,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	TArray<float> JumpPowerLevels{1200.f, 1400.f, 1800.f};
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	float AttackForce{750.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	float MaxHealth{100.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	float Health{MaxHealth};
 
 	FTimerHandle AttackTimer;
 	FTimerHandle FootstepTimer;

@@ -43,6 +43,7 @@ void AHopperBaseCharacter::BeginPlay()
 
 	SetReplicateMovement(true);
 	FootstepDelegate.AddDynamic(this, &AHopperBaseCharacter::OnFootstep);
+	CharacterDeathDelegate.AddDynamic(this, &AHopperBaseCharacter::OnDeath);
 }
 
 void AHopperBaseCharacter::OnJumped_Implementation()
@@ -108,6 +109,12 @@ void AHopperBaseCharacter::NotifyFootstepTaken()
 			FootstepDelegate.Broadcast();
 		GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
 	}
+}
+
+void AHopperBaseCharacter::CharacterDeath() const
+{
+	if (CharacterDeathDelegate.IsBound())
+		CharacterDeathDelegate.Broadcast();
 }
 
 bool AHopperBaseCharacter::Punch(UNiagaraSystem* SystemToSpawn)
@@ -198,6 +205,7 @@ bool AHopperBaseCharacter::Punch(UNiagaraSystem* SystemToSpawn)
 						SystemToSpawn,
 						HopperEnemy->GetActorLocation());
 				}
+				HopperEnemy->DamageHealth(HopperEnemy->GetMaxHealth() / 3);
 			}
 		}
 	}
@@ -354,5 +362,15 @@ void AHopperBaseCharacter::SetCurrentAnimationDirection(const FVector& Velocity,
 		{
 			CurrentAnimationDirection = HopperAnimationDirection::Left;
 		}
+	}
+}
+
+void AHopperBaseCharacter::DamageHealth(const float Damage)
+{
+	Health -= Damage;
+	UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health)
+	if (Health <= 0)
+	{
+		CharacterDeath();
 	}
 }
