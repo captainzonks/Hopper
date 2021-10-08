@@ -3,23 +3,31 @@
 #include "Actors/HopperBaseCharacter.h"
 
 #include "PaperFlipbookComponent.h"
+#include "Actors/HopperEnemy.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
+	bReplicates = true;
+
 	bFootstepGate = true;
 	bAttackGate = true;
 
 	OnCharacterMovementUpdated.AddDynamic(this, &AHopperBaseCharacter::Animate);
 
+	AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Attack Sphere"));
+	AttackSphere->SetupAttachment(RootComponent);
+	AttackSphere->SetSphereRadius(AttackRadius);
+
 	GetCharacterMovement()->GravityScale = 2.8f;
 	GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[0];
-
-	bReplicates = true;
 
 	GetCapsuleComponent()->SetCapsuleRadius(70.f);
 
@@ -27,17 +35,6 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	GetSprite()->SetUsingAbsoluteRotation(true);
 	GetSprite()->SetFlipbook(MovementFlipbooks.IdleDown);
 	GetSprite()->CastShadow = true;
-}
-
-void AHopperBaseCharacter::NotifyFootstepTaken()
-{
-	if (bFootstepGate)
-	{
-		bFootstepGate = !bFootstepGate;
-		if (FootstepDelegate.IsBound())
-			FootstepDelegate.Broadcast();
-		GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
-	}
 }
 
 void AHopperBaseCharacter::BeginPlay()
@@ -102,9 +99,22 @@ void AHopperBaseCharacter::ResetJumpPower()
 	UE_LOG(LogTemp, Warning, TEXT("Jump Power Reset"))
 }
 
-void AHopperBaseCharacter::Punch()
+void AHopperBaseCharacter::NotifyFootstepTaken()
 {
-	FVector NewLocation = GetSprite()->GetRelativeLocation();
+	if (bFootstepGate)
+	{
+		bFootstepGate = !bFootstepGate;
+		if (FootstepDelegate.IsBound())
+			FootstepDelegate.Broadcast();
+		GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
+	}
+}
+
+bool AHopperBaseCharacter::Punch(UNiagaraSystem* SystemToSpawn)
+{
+	bool bHit{false};
+	FVector NewLocation{GetSprite()->GetRelativeLocation()};
+
 	if (bAttackGate)
 	{
 		switch (CurrentAnimationDirection)
@@ -165,7 +175,34 @@ void AHopperBaseCharacter::Punch()
 			                                GetSprite()->SetRelativeLocation(FVector::ZeroVector);
 		                                },
 		                                0.3f, false);
+
+		TArray<AActor*> OverlappingActors;
+		AttackSphere->GetOverlappingActors(OverlappingActors, AHopperEnemy::StaticClass());
+		if (OverlappingActors.Num() > 0)
+		{
+			bHit = true;
+			for (AActor* Actor : OverlappingActors)
+			{
+				AHopperEnemy* HopperEnemy = Cast<AHopperEnemy>(Actor);
+				const FVector Direction = UKismetMathLibrary::GetDirectionUnitVector(
+					GetActorLocation(), HopperEnemy->GetActorLocation());
+				HopperEnemy->LaunchCharacter(FVector(
+					                             Direction.X * AttackForce,
+					                             Direction.Y * AttackForce,
+					                             (Direction.Z + 1.f) * AttackForce),
+				                             false, false);
+				if (IsValid(SystemToSpawn))
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						this,
+						SystemToSpawn,
+						HopperEnemy->GetActorLocation());
+				}
+			}
+		}
 	}
+
+	return bHit;
 }
 
 void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity)

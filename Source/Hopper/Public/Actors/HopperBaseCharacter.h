@@ -7,6 +7,8 @@
 #include "Core/HopperData.h"
 #include "HopperBaseCharacter.generated.h"
 
+class UNiagaraSystem;
+class USphereComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFootstepSignature);
 
 /**
@@ -51,15 +53,18 @@ protected:
 	/**
 	 * Changes sprite to an Editor-set Flipbook for a punch animation, based on
 	 * direction, then shifts the sprite's local transform by 25.f in the punch's
-	 * direction. Resets after 0.3 seconds.
+	 * direction, launches the enemy character, and spawns an emitter if provided.
+	 * Resets after 0.3 seconds.
+	 * @param SystemToSpawn Pointer to a Niagara System
+	 * @return True if successful hit
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Actions")
-	void Punch();
+	bool Punch(UNiagaraSystem* SystemToSpawn);
 
 	/** Animation */
 
 	/**
-	 * Animates the sprite with Editor-selected Flipbooks for movement. This function is called
+	 * Animates the sprite with Editor-set Flipbooks for movement. This function is called
 	 * by binding it to the OnCharacterMovementUpdated delegate. Direction is selected by
 	 * calling SetCurrentAnimationDirection().
 	 * @param DeltaTime Time since last frame.
@@ -76,6 +81,9 @@ protected:
 	 * @param ViewInfo Player's camera information.
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
+	TObjectPtr<USphereComponent> AttackSphere;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	uint8 bIsMoving:1;
@@ -91,10 +99,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	TArray<float> JumpPowerLevels{1200.f, 1400.f, 1800.f};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	float AttackForce{750.f};
 
 	FTimerHandle AttackTimer;
 	FTimerHandle FootstepTimer;
 	FTimerHandle JumpReset;
+	float AttackRadius{150.f};
 	int JumpCounter{};
 	uint8 bFootstepGate:1;
 	uint8 bAttackGate:1;
