@@ -8,7 +8,7 @@ class AHopperBaseCharacter;
 class UPaperFlipbook;
 
 UENUM(BlueprintType)
-enum class HopperAnimationDirection : uint8
+enum class EHopperAnimationDirection : uint8
 {
 	Down,
 	Up,
@@ -21,22 +21,16 @@ enum class HopperAnimationDirection : uint8
 };
 
 UENUM(BlueprintType)
-enum class HopperAttackType : uint8
+enum class EHopperAbilityInputID : uint8
 {
-	Melee
+	None,
+	Confirm,
+	Cancel,
+	Punch
 };
 
 USTRUCT(BlueprintType)
-struct FHopperAttack
-{
-	GENERATED_BODY()
-
-	HopperAttackType AttackType;
-	TObjectPtr<AHopperBaseCharacter> Target;
-};
-
-USTRUCT(BlueprintType)
-struct FHopperMovementFlipbooks
+struct HOPPER_API FHopperMovementFlipbooks
 {
 	GENERATED_BODY()
 
@@ -94,7 +88,7 @@ struct FHopperMovementFlipbooks
 };
 
 USTRUCT(BlueprintType)
-struct FHopperPunchFlipbooks
+struct HOPPER_API FHopperPunchFlipbooks
 {
 	GENERATED_BODY()
 
