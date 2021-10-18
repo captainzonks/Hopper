@@ -38,10 +38,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
 
-	// Checks if any HopperBaseEnemy Actors are within the AttackSphere
-	UFUNCTION(BlueprintPure, Category = "Actions")
-	bool IsEnemyInAttackRadius() const;
-
 	/**
 	 * Plays a punch Flipbook from the character's PunchFlipbooks struct
 	 * based on the CurrentAnimationDirection enum, then sets the AttackTimer
@@ -114,7 +110,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
-	// Called from HopperAttributeSet, these call BP events above
+	/** Called from HopperAttributeSet, these call BP events above */
+	
 	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo,
 	                          const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
 	                          AActor* DamageCauser);
@@ -135,6 +132,9 @@ protected:
 	void OnDeath();
 	void CharacterDeath() const;
 
+	/**
+	 * Called when the Attack Timer ends and bAttackGate is open again.
+	 */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAttackTimerEnd();
 	void AttackTimerReset() const;

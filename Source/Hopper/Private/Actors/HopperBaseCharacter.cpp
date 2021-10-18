@@ -3,7 +3,6 @@
 #include "Actors/HopperBaseCharacter.h"
 
 #include "PaperFlipbookComponent.h"
-#include "Actors/HopperEnemy.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -50,6 +49,7 @@ void AHopperBaseCharacter::BeginPlay()
 
 	SetReplicateMovement(true);
 	FootstepDelegate.AddDynamic(this, &AHopperBaseCharacter::OnFootstep);
+	AttackTimerDelegate.AddDynamic(this, &AHopperBaseCharacter::OnAttackTimerEnd);
 	CharacterDeathDelegate.AddDynamic(this, &AHopperBaseCharacter::OnDeath);
 }
 
@@ -143,14 +143,14 @@ void AHopperBaseCharacter::ModifyJumpPower()
 	{
 	case 1:
 		GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[1];
-		UE_LOG(LogHopper, Warning, TEXT("Jump Power Level 1"))
+		UE_LOG(LogHopper, Display, TEXT("Jump Power Level 1"))
 		break;
 	case 2:
 		GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[2];
-		UE_LOG(LogHopper, Warning, TEXT("Jump Power Level 2"))
+		UE_LOG(LogHopper, Display, TEXT("Jump Power Level 2"))
 		break;
 	default:
-		UE_LOG(LogHopper, Warning, TEXT("Jump Power Level 0"))
+		UE_LOG(LogHopper, Display, TEXT("Jump Power Level 0"))
 		break;
 	}
 }
@@ -159,7 +159,7 @@ void AHopperBaseCharacter::ResetJumpPower()
 {
 	JumpCounter = 0;
 	GetCharacterMovement()->JumpZVelocity = JumpPowerLevels[0];
-	UE_LOG(LogHopper, Warning, TEXT("Jump Power Reset"))
+	UE_LOG(LogHopper, Display, TEXT("Jump Power Reset"))
 }
 
 void AHopperBaseCharacter::NotifyFootstepTaken()
@@ -183,16 +183,6 @@ void AHopperBaseCharacter::AttackTimerReset() const
 {
 	if (AttackTimerDelegate.IsBound())
 		AttackTimerDelegate.Broadcast();
-}
-
-
-bool AHopperBaseCharacter::IsEnemyInAttackRadius() const
-{
-	TArray<AActor*> OverlappingActors;
-	AttackSphere->GetOverlappingActors(OverlappingActors, AHopperEnemy::StaticClass());
-	if (OverlappingActors.Num() > 0)
-		return true;
-	return false;
 }
 
 float AHopperBaseCharacter::GetHealth() const
