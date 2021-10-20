@@ -13,7 +13,6 @@ class UHopperGameplayAbility;
 class UGameplayEffect;
 class UHopperAbilitySystemComponent;
 class UHopperAttributeSet;
-class UNiagaraSystem;
 class USphereComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFootstepSignature);
@@ -33,7 +32,9 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilityS
 public:
 	AHopperBaseCharacter();
 
-	/** Actions */
+	/*********************************
+	 *         Combat
+	 ********************************/
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
@@ -47,6 +48,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Animation")
 	void PlayPunchAnimation(const float TimerValue = 0.3f);
 
+	/*********************************/
+
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable)
 	virtual float GetHealth() const;
@@ -56,7 +59,9 @@ public:
 	virtual float GetMaxHealth() const;
 
 protected:
-	/** Class Overrides */
+	/*********************************
+	 *      Class Overrides
+	 *********************************/
 
 	virtual void BeginPlay() override;
 	virtual void OnJumped_Implementation() override;
@@ -67,26 +72,36 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/******************
-	 * Ability System
-	 ******************/
+	/**********************************
+	 *         Ability System
+	 **********************************/
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
 	virtual void AddStartupGameplayAbilities();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UHopperAbilitySystemComponent> AbilitySystemComponent;
+
 	/** Passive gameplay effects applied on creation */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Abilities)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayEffect>> PassiveGameplayEffects;
 
 	/** Abilities to grant to this character on creation. These will be activated by tag or event and are not bound to specific inputs */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Abilities)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UHopperGameplayAbility>> GameplayAbilities;
+
+	UPROPERTY()
+	TObjectPtr<UHopperAttributeSet> Attributes;
 
 	/** If true we have initialized our abilities */
 	UPROPERTY()
 	uint8 bAbilitiesInitialized:1;
-	
+
+	// Friended to allow access to handle functions
+	friend UHopperAttributeSet;
+
+	/**********************************/
+
 	/**
 	 * Called when character takes damage, which may have killed them
 	 *
@@ -111,11 +126,15 @@ protected:
 	void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	/** Called from HopperAttributeSet, these call BP events above */
-	
+
 	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo,
 	                          const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
 	                          AActor* DamageCauser);
 	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+
+	/****************************
+	 *    Delegates & Events
+	 ***************************/
 
 	/**
 	 * Called upon movement, with a timer delay of 0.3 seconds.
@@ -140,22 +159,27 @@ protected:
 	void AttackTimerReset() const;
 
 	/* Broadcast when the Flipbook animation is walking */
-	UPROPERTY(BlueprintAssignable, Category="Character")
+	UPROPERTY(BlueprintAssignable, Category="Delegates")
 	FFootstepSignature FootstepDelegate;
 
 	/* Broadcast when Character's health reaches 0 */
-	UPROPERTY(BlueprintAssignable, Category="Character")
+	UPROPERTY(BlueprintAssignable, Category="Delegates")
 	FCharacterDeathSignature CharacterDeathDelegate;
 
-	UPROPERTY(BlueprintAssignable, Category = "Character")
+	/* Broadcast when Character's attack is finished */
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
 	FAttackTimerResetSignature AttackTimerDelegate;
 
-	/** Movement */
+	/*************************
+	 *       Movement
+	 *************************/
 
 	void ModifyJumpPower();
 	void ResetJumpPower();
 
-	/** Animation */
+	/************************
+	 *      Animation
+	 ************************/
 
 	/**
 	 * Animates the sprite with Editor-set Flipbooks for movement. This function is called
@@ -165,7 +189,7 @@ protected:
 	 * @param OldLocation Location at call.
 	 * @param OldVelocity Velocity at call.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Animation")
+	UFUNCTION()
 	void Animate(float DeltaTime, FVector OldLocation, const FVector OldVelocity);
 
 	/**
@@ -176,17 +200,10 @@ protected:
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
 
+	/**************************/
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	TObjectPtr<USphereComponent> AttackSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UHopperAbilitySystemComponent> AbilitySystemComponent;
-
-	UPROPERTY()
-	TObjectPtr<UHopperAttributeSet> Attributes;
-
-	// Friended to allow access to handle functions above
-	friend UHopperAttributeSet;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	uint8 bIsMoving:1;
@@ -206,13 +223,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	float AttackForce{750.f};
 
-	FTimerHandle AttackTimer;
-	FTimerHandle FootstepTimer;
-	FTimerHandle JumpReset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	float AttackRadius{150.f};
-	int JumpCounter{};
-	uint8 bFootstepGate:1;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
 	uint8 bAttackGate:1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Config")
+	uint8 bFootstepGate:1;
+
+	FTimerHandle AttackTimer;
+	FTimerHandle FootstepTimer;
+	FTimerHandle JumpReset;
+	int JumpCounter{};
 };
