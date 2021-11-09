@@ -31,24 +31,10 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilityS
 
 public:
 	AHopperBaseCharacter();
-
+	
 	/*********************************
-	 *         Combat
-	 ********************************/
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Actions")
-	void HandlePunch();
-
-	/**
-	 * Plays a punch Flipbook from the character's PunchFlipbooks struct
-	 * based on the CurrentAnimationDirection enum, then sets the AttackTimer
-	 * to the provided float value.
-	 * @param TimerValue How much time it takes before another attack can execute.
-	 */
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Animation")
-	void PlayPunchAnimation(const float TimerValue = 0.3f);
-
-	/*********************************/
+	*           Getters
+	*********************************/
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable)
@@ -79,29 +65,6 @@ protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual void AddStartupGameplayAbilities();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UHopperAbilitySystemComponent> AbilitySystemComponent;
-
-	/** Passive gameplay effects applied on creation */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayEffect>> PassiveGameplayEffects;
-
-	/** Abilities to grant to this character on creation. These will be activated by tag or event and are not bound to specific inputs */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
-	TArray<TSubclassOf<UHopperGameplayAbility>> GameplayAbilities;
-
-	UPROPERTY()
-	TObjectPtr<UHopperAttributeSet> Attributes;
-
-	/** If true we have initialized our abilities */
-	UPROPERTY()
-	uint8 bAbilitiesInitialized:1;
-
-	// Friended to allow access to handle functions
-	friend UHopperAttributeSet;
-
-	/**********************************/
-
 	/**
 	 * Called when character takes damage, which may have killed them
 	 *
@@ -113,7 +76,7 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags,
-	               AHopperBaseCharacter* InstigatorCharacter, AActor* DamageCauser);
+				   AHopperBaseCharacter* InstigatorCharacter, AActor* DamageCauser);
 
 	/**
 	 * Called when health is changed, either from healing or from being damaged
@@ -128,10 +91,48 @@ protected:
 	/** Called from HopperAttributeSet, these call BP events above */
 
 	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo,
-	                          const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
-	                          AActor* DamageCauser);
+							  const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
+							  AActor* DamageCauser);
 	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UHopperAbilitySystemComponent> AbilitySystemComponent;
+
+	/** Passive gameplay effects applied on creation */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayEffect>> PassiveGameplayEffects;
+
+	/** Abilities to grant to this character on creation. These will be activated
+	 * by tag or event and are not bound to specific inputs */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UHopperGameplayAbility>> GameplayAbilities;
+
+	UPROPERTY()
+	TObjectPtr<UHopperAttributeSet> Attributes;
+
+	/** If true we have initialized our abilities */
+	UPROPERTY()
+	uint8 bAbilitiesInitialized:1;
+
+	/** Friended to allow access to handle functions */
+	friend UHopperAttributeSet;
+
+	/*********************************
+	 *         Combat
+	********************************/
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Actions")
+	void HandlePunch();
+
+	/**
+	 * Plays a punch Flipbook from the character's PunchFlipbooks struct
+	 * based on the CurrentAnimationDirection enum, then sets the AttackTimer
+	 * to the provided float value.
+	 * @param TimerValue How much time it takes before another attack can execute.
+	 */
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Animation")
+	void PlayPunchAnimation(const float TimerValue = 0.3f);
+	
 	/****************************
 	 *    Delegates & Events
 	 ***************************/
