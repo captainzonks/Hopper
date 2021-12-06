@@ -6,6 +6,7 @@
 
 class AHopperBaseCharacter;
 class UPaperFlipbook;
+class UHopperItem;
 
 UENUM(BlueprintType)
 enum class EHopperAnimationDirection : uint8
@@ -116,3 +117,71 @@ struct HOPPER_API FHopperPunchFlipbooks
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UPaperFlipbook> PunchUpLeft;
 };
+
+USTRUCT(BlueprintType)
+struct HOPPER_API FHopperItemData
+{
+	GENERATED_BODY()
+
+	/** Constructor, default to count/level 1 so declaring them in blueprints gives you the expected behavior */
+	FHopperItemData()
+		: ItemCount(1),
+		  ItemLevel(1)
+	{
+	}
+
+	FHopperItemData(const int32 InItemCount, const int32 InItemLevel)
+		: ItemCount(InItemCount),
+		  ItemLevel(InItemLevel)
+	{
+	}
+
+	/** The number of instances of this item in the inventory, can never be below 1 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Item)
+	int32 ItemCount;
+
+	/** The level of this item. This level is shared for all instances, can never be below 1 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Item)
+	int32 ItemLevel;
+
+	/** Equality operators */
+	bool operator==(const FHopperItemData& Other) const
+	{
+		return ItemCount == Other.ItemCount && ItemLevel == Other.ItemLevel;
+	}
+	bool operator!=(const FHopperItemData& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	/** Returns true if count is greater than 0 */
+	bool IsValid() const
+	{
+		return ItemCount > 0;
+	}
+
+	/** Append an item data, this adds the count and overrides everything else */
+	void UpdateItemData(const FHopperItemData& Other, int32 MaxCount, int32 MaxLevel)
+	{
+		if (MaxCount <= 0)
+		{
+			MaxCount = MAX_int32;
+		}
+
+		if (MaxLevel <= 0)
+		{
+			MaxLevel = MAX_int32;
+		}
+
+		ItemCount = FMath::Clamp(ItemCount + Other.ItemCount, 1, MaxCount);
+		ItemLevel = FMath::Clamp(Other.ItemLevel, 1, MaxLevel);
+	}
+};
+
+/** Delegate called when an inventory item changes */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemChanged, bool, bAdded, UHopperItem*, Item);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemChangedNative, bool, UHopperItem*);
+
+/** Delegate called when the entire inventory has been loaded, all items may have been replaced */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryLoaded);
+DECLARE_MULTICAST_DELEGATE(FOnInventoryLoadedNative);
