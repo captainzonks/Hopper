@@ -7,4 +7,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Core/HopperData.h"
+
 HOPPER_API DECLARE_LOG_CATEGORY_EXTERN(LogHopper, Log, All);
