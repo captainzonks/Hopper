@@ -15,23 +15,18 @@ class UHopperAbilitySystemComponent;
 class UHopperAttributeSet;
 class USphereComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFootstepSignature);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttackTimerResetSignature);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCharacterDeathSignature);
-
 /**
  * Base character class
  */
 UCLASS()
-class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilitySystemInterface
+class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilitySystemInterface,
+                                        public IHopperCharacterInterface
 {
 	GENERATED_BODY()
 
 public:
 	AHopperBaseCharacter();
-	
+
 	/*********************************
 	*           Getters
 	*********************************/
@@ -76,7 +71,7 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags,
-				   AHopperBaseCharacter* InstigatorCharacter, AActor* DamageCauser);
+	               AHopperBaseCharacter* InstigatorCharacter, AActor* DamageCauser);
 
 	/**
 	 * Called when health is changed, either from healing or from being damaged
@@ -91,8 +86,8 @@ protected:
 	/** Called from HopperAttributeSet, these call BP events above */
 
 	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo,
-							  const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
-							  AActor* DamageCauser);
+	                          const struct FGameplayTagContainer& DamageTags, AHopperBaseCharacter* InstigatorCharacter,
+	                          AActor* DamageCauser);
 	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -121,7 +116,7 @@ protected:
 	 *         Combat
 	********************************/
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Actions")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
 
 	/**
@@ -132,7 +127,15 @@ protected:
 	 */
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Animation")
 	void PlayPunchAnimation(const float TimerValue = 0.3f);
-	
+
+	/**
+	 * Launches Target away from the provided FromLocation using the provided AttackForce.
+	 * @param FromLocation Location of attacker or cause of launch
+	 * @param InAttackForce Force applied to the launch
+	 */
+	UFUNCTION(BlueprintCallable)
+	virtual void ApplyPunchForceToCharacter(const FVector FromLocation, const float InAttackForce) const override;
+
 	/****************************
 	 *    Delegates & Events
 	 ***************************/
@@ -143,33 +146,36 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OnFootstep();
-	void NotifyFootstepTaken();
+	void OnFootstepNative();
 
 	/**
 	 * Called when Character dies.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OnDeath();
-	void CharacterDeath() const;
+	void OnDeathNative();
 
 	/**
 	 * Called when the Attack Timer ends and bAttackGate is open again.
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnAttackTimerEnd();
-	void AttackTimerReset() const;
+	void OnAttackEnd();
+	void OnAttackEndNative();
 
 	/* Broadcast when the Flipbook animation is walking */
 	UPROPERTY(BlueprintAssignable, Category="Delegates")
-	FFootstepSignature FootstepDelegate;
+	FOnFootstepTaken OnFootstepTaken;
+	FOnFootstepTakenNative OnFootstepTakenNative;
 
 	/* Broadcast when Character's health reaches 0 */
 	UPROPERTY(BlueprintAssignable, Category="Delegates")
-	FCharacterDeathSignature CharacterDeathDelegate;
+	FOnCharacterDeath OnCharacterDeath;
+	FOnCharacterDeathNative OnCharacterDeathNative;
 
 	/* Broadcast when Character's attack is finished */
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
-	FAttackTimerResetSignature AttackTimerDelegate;
+	FOnAttackTimerEnd OnAttackTimerEnd;
+	FOnAttackTimerEndNative OnAttackTimerEndNative;
 
 	/*************************
 	 *       Movement
