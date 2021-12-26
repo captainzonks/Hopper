@@ -116,7 +116,7 @@ protected:
 	 *         Combat
 	********************************/
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Actions")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
 
 	/**
@@ -243,4 +243,6 @@ protected:
 	FTimerHandle FootstepTimer;
 	FTimerHandle JumpReset;
 	int JumpCounter{};
+
+	FGameplayTag DeadTag;
 };
