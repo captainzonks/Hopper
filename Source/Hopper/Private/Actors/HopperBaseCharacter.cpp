@@ -2,16 +2,6 @@
 
 #include "Actors/HopperBaseCharacter.h"
 
-#include "PaperFlipbookComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/SphereComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PawnMovementComponent.h"
-#include "Core/Abilities/HopperAttributeSet.h"
-#include "Core/HopperGameMode.h"
-#include "Core/Abilities/HopperGameplayAbility.h"
-#include "Core/Components/HopperAbilitySystemComponent.h"
-
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
 	bReplicates = true;
@@ -41,6 +31,8 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	Attributes = CreateDefaultSubobject<UHopperAttributeSet>(TEXT("Attributes"));
+
+	DeadTag = FGameplayTag::RequestGameplayTag("Gameplay.Status.IsDead");
 }
 
 void AHopperBaseCharacter::BeginPlay()
@@ -48,9 +40,9 @@ void AHopperBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SetReplicateMovement(true);
-	FootstepDelegate.AddDynamic(this, &AHopperBaseCharacter::OnFootstep);
-	AttackTimerDelegate.AddDynamic(this, &AHopperBaseCharacter::OnAttackTimerEnd);
-	CharacterDeathDelegate.AddDynamic(this, &AHopperBaseCharacter::OnDeath);
+	OnFootstepTakenNative.AddUObject(this, &AHopperBaseCharacter::OnFootstepNative);
+	OnAttackTimerEndNative.AddUObject(this, &AHopperBaseCharacter::OnAttackEndNative);
+	OnCharacterDeathNative.AddUObject(this, &AHopperBaseCharacter::OnDeathNative);
 }
 
 void AHopperBaseCharacter::OnJumped_Implementation()
@@ -162,27 +154,96 @@ void AHopperBaseCharacter::ResetJumpPower()
 	UE_LOG(LogHopper, Display, TEXT("Jump Power Reset"))
 }
 
-void AHopperBaseCharacter::NotifyFootstepTaken()
+void AHopperBaseCharacter::HandlePunch_Implementation()
+{
+	TArray<AActor*> ActorsArray;
+	AttackSphere->GetOverlappingActors(ActorsArray);
+	int Count{};
+
+	if (ActorsArray.Num() > 0)
+	{
+		for (AActor* Actor : ActorsArray)
+		{
+			if (Actor &&
+				Actor != this &&
+				Actor->ActorHasTag("Enemy") &&
+				UKismetSystemLibrary::DoesImplementInterface(
+					Actor, UHopperCharacterInterface::StaticClass()) &&
+				UKismetSystemLibrary::DoesImplementInterface(
+					Actor, UAbilitySystemInterface::StaticClass()))
+			{
+				// don't punch if dead
+				if (Cast<IAbilitySystemInterface>(Actor)->GetAbilitySystemComponent()->HasMatchingGameplayTag(
+					FGameplayTag::RequestGameplayTag("Gameplay.Status.IsDead")))
+				{
+					UE_LOG(LogHopper, Log, TEXT("Found IsDead"))
+					continue;
+				}
+				
+				UE_LOG(LogHopper, Log, TEXT("Applying Punch Force"))
+				Cast<IHopperCharacterInterface>(Actor)->ApplyPunchForceToCharacter(GetActorLocation(), AttackForce);
+
+				const FGameplayTag Tag = FGameplayTag::RequestGameplayTag("Weapon.Hit");
+				FGameplayEventData Payload = FGameplayEventData();
+				Payload.Instigator = GetInstigator();
+				Payload.Target = Actor;
+				Payload.TargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(Actor);
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetInstigator(), Tag, Payload);
+				
+				++Count;
+			}
+		}
+	}
+
+	// if our Count returns 0, it means we did not hit an enemy and we should end our ability
+	if (Count == 0)
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag("Weapon.NoHit");
+		FGameplayEventData Payload = FGameplayEventData();
+		Payload.Instigator = GetInstigator();
+		Payload.TargetData = FGameplayAbilityTargetDataHandle();
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetInstigator(), Tag, Payload);
+	}
+}
+
+void AHopperBaseCharacter::ApplyPunchForceToCharacter(const FVector FromLocation, const float InAttackForce) const
+{
+	const FVector TargetLocation = GetActorLocation();
+	const FVector Direction = UKismetMathLibrary::GetDirectionUnitVector(FromLocation, TargetLocation);
+
+	GetCharacterMovement()->Launch(FVector(
+		Direction.X * AttackForce,
+		Direction.Y * AttackForce,
+		abs(Direction.Z + 1) * AttackForce));
+}
+
+void AHopperBaseCharacter::OnFootstepNative()
 {
 	if (bFootstepGate)
 	{
 		bFootstepGate = !bFootstepGate;
-		if (FootstepDelegate.IsBound())
-			FootstepDelegate.Broadcast();
+		if (OnFootstepTaken.IsBound())
+		{
+			OnFootstepTaken.Broadcast();
+		}
 		GetWorldTimerManager().SetTimer(FootstepTimer, [this]() { bFootstepGate = true; }, 0.3f, false);
 	}
 }
 
-void AHopperBaseCharacter::CharacterDeath() const
+void AHopperBaseCharacter::OnDeathNative()
 {
-	if (CharacterDeathDelegate.IsBound())
-		CharacterDeathDelegate.Broadcast();
+	if (OnCharacterDeath.IsBound())
+	{
+		OnCharacterDeath.Broadcast();
+	}
 }
 
-void AHopperBaseCharacter::AttackTimerReset() const
+void AHopperBaseCharacter::OnAttackEndNative()
 {
-	if (AttackTimerDelegate.IsBound())
-		AttackTimerDelegate.Broadcast();
+	if (OnAttackTimerEnd.IsBound())
+	{
+		OnAttackTimerEnd.Broadcast();
+	}
 }
 
 float AHopperBaseCharacter::GetHealth() const
@@ -256,7 +317,10 @@ void AHopperBaseCharacter::Animate(float DeltaTime, FVector OldLocation, const F
 
 		if (!GetCharacterMovement()->IsFalling())
 		{
-			NotifyFootstepTaken();
+			if (OnFootstepTakenNative.IsBound())
+			{
+				OnFootstepTakenNative.Broadcast();
+			}
 		}
 	}
 	else
@@ -422,7 +486,10 @@ void AHopperBaseCharacter::PlayPunchAnimation_Implementation(const float TimerVa
 		                                {
 			                                bAttackGate = true;
 			                                GetSprite()->SetRelativeLocation(FVector::ZeroVector);
-			                                AttackTimerReset();
+			                                if (OnAttackTimerEndNative.IsBound())
+			                                {
+				                                OnAttackTimerEndNative.Broadcast();
+			                                }
 		                                },
 		                                TimerValue, false);
 	}
@@ -478,5 +545,10 @@ void AHopperBaseCharacter::HandleHealthChanged(float DeltaValue, const FGameplay
 	if (bAbilitiesInitialized)
 	{
 		OnHealthChanged(DeltaValue, EventTags);
+		if (GetHealth() <= 0)
+		{
+			UE_LOG(LogHopper, Warning, TEXT("Adding DeadTag"))
+			AbilitySystemComponent->AddLooseGameplayTag(DeadTag);
+		}
 	}
 }

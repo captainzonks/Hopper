@@ -4,7 +4,8 @@
 #include "Core/Items/HopperItem.h"
 #include "AbilitySystemGlobals.h"
 
-const FPrimaryAssetType UHopperAssetManager::TokenItemType = TEXT("Token");
+// initialize static variable
+const FPrimaryAssetType UHopperAssetManager::TokenItemType {TEXT("Token")};
 
 UHopperAssetManager& UHopperAssetManager::Get()
 {
@@ -30,7 +31,7 @@ void UHopperAssetManager::StartInitialLoading()
 
 UHopperItem* UHopperAssetManager::ForceLoadItem(const FPrimaryAssetId& PrimaryAssetId, bool bLogWarning)
 {
-	FSoftObjectPath ItemPath = GetPrimaryAssetPath(PrimaryAssetId);
+	const FSoftObjectPath ItemPath = GetPrimaryAssetPath(PrimaryAssetId);
 
 	// This does a synchronous load and may hitch
 	UHopperItem* LoadedItem = Cast<UHopperItem>(ItemPath.TryLoad());

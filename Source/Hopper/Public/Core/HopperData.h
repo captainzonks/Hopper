@@ -185,3 +185,15 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemChangedNative, bool, UHoppe
 /** Delegate called when the entire inventory has been loaded, all items may have been replaced */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryLoaded);
 DECLARE_MULTICAST_DELEGATE(FOnInventoryLoadedNative);
+
+/** Delegate called when a footstep is made */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFootstepTaken);
+DECLARE_MULTICAST_DELEGATE(FOnFootstepTakenNative);
+
+/** Delegate called when the attack timer ends */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackTimerEnd);
+DECLARE_MULTICAST_DELEGATE(FOnAttackTimerEndNative);
+
+/** Delegate called when a character dies */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeath);
+DECLARE_MULTICAST_DELEGATE(FOnCharacterDeathNative);
