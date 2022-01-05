@@ -13,6 +13,7 @@ class UHopperGameplayAbility;
 class UGameplayEffect;
 class UHopperAbilitySystemComponent;
 class UHopperAttributeSet;
+class UAIPerceptionComponent;
 class USphereComponent;
 
 /**
@@ -27,9 +28,9 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilityS
 public:
 	AHopperBaseCharacter();
 
-	/*********************************
-	*           Getters
-	*********************************/
+	/**********************************
+	 *           Getters
+	 **********************************/
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable)
@@ -40,9 +41,9 @@ public:
 	virtual float GetMaxHealth() const;
 
 protected:
-	/*********************************
-	 *      Class Overrides
-	 *********************************/
+	/**********************************
+	 *         Class Overrides
+	 **********************************/
 
 	virtual void BeginPlay() override;
 	virtual void OnJumped_Implementation() override;
@@ -112,9 +113,9 @@ protected:
 	/** Friended to allow access to handle functions */
 	friend UHopperAttributeSet;
 
-	/*********************************
-	 *         Combat
-	********************************/
+	/**********************************
+	 *            Combat
+	 **********************************/
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
@@ -136,9 +137,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void ApplyPunchForceToCharacter(const FVector FromLocation, const float InAttackForce) const override;
 
-	/****************************
-	 *    Delegates & Events
-	 ***************************/
+	/**********************************
+	 *       Delegates & Events
+	 **********************************/
 
 	/**
 	 * Called upon movement, with a timer delay of 0.3 seconds.
@@ -177,16 +178,16 @@ protected:
 	FOnAttackTimerEnd OnAttackTimerEnd;
 	FOnAttackTimerEndNative OnAttackTimerEndNative;
 
-	/*************************
-	 *       Movement
-	 *************************/
+	/**********************************
+	 *           Movement
+	 **********************************/
 
 	void ModifyJumpPower();
 	void ResetJumpPower();
 
-	/************************
-	 *      Animation
-	 ************************/
+	/**********************************
+	 *           Animation
+	 **********************************/
 
 	/**
 	 * Animates the sprite with Editor-set Flipbooks for movement. This function is called
@@ -206,6 +207,12 @@ protected:
 	 * @param ViewInfo Player's camera information.
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
+
+	/**********************************
+     *         AI Perception
+	 **********************************/
+
+
 
 	/**************************/
 

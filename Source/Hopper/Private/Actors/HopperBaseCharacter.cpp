@@ -2,6 +2,9 @@
 
 #include "Actors/HopperBaseCharacter.h"
 
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig.h"
+
 AHopperBaseCharacter::AHopperBaseCharacter()
 {
 	bReplicates = true;
@@ -33,6 +36,8 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	Attributes = CreateDefaultSubobject<UHopperAttributeSet>(TEXT("Attributes"));
 
 	DeadTag = FGameplayTag::RequestGameplayTag("Gameplay.Status.IsDead");
+
+
 }
 
 void AHopperBaseCharacter::BeginPlay()
