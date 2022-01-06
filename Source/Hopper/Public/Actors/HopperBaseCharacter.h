@@ -53,6 +53,9 @@ protected:
 	virtual void OnRep_PlayerState() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
+	                       FVector HitLocation, FVector HitNormal, FVector NormalImpulse,
+	                       const FHitResult& Hit) override;
 
 	/**********************************
 	 *         Ability System
@@ -185,6 +188,7 @@ protected:
 	void ModifyJumpPower();
 	void ResetJumpPower();
 
+
 	/**********************************
 	 *           Animation
 	 **********************************/
@@ -207,12 +211,6 @@ protected:
 	 * @param ViewInfo Player's camera information.
 	 */
 	virtual void SetCurrentAnimationDirection(const FVector& Velocity, TOptional<FMinimalViewInfo> ViewInfo);
-
-	/**********************************
-     *         AI Perception
-	 **********************************/
-
-
 
 	/**************************/
 

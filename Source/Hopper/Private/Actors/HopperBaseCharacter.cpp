@@ -36,8 +36,6 @@ AHopperBaseCharacter::AHopperBaseCharacter()
 	Attributes = CreateDefaultSubobject<UHopperAttributeSet>(TEXT("Attributes"));
 
 	DeadTag = FGameplayTag::RequestGameplayTag("Gameplay.Status.IsDead");
-
-
 }
 
 void AHopperBaseCharacter::BeginPlay()
@@ -132,6 +130,17 @@ void AHopperBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void AHopperBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void AHopperBaseCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp,
+	bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if (UKismetSystemLibrary::DoesImplementInterface(Other, UHopperCharacterInterface::StaticClass()))
+	{
+		Cast<IHopperCharacterInterface>(Other)->ApplyPunchForceToCharacter(GetActorLocation(), 100.f);
+	}
 }
 
 void AHopperBaseCharacter::ModifyJumpPower()
