@@ -133,11 +133,13 @@ void AHopperBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 }
 
 void AHopperBaseCharacter::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp,
-	bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+                                     bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse,
+                                     const FHitResult& Hit)
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 
-	if (UKismetSystemLibrary::DoesImplementInterface(Other, UHopperCharacterInterface::StaticClass()))
+	if (UKismetSystemLibrary::DoesImplementInterface(Other, UHopperCharacterInterface::StaticClass())
+		&& this-> ActorHasTag("Enemy"))
 	{
 		Cast<IHopperCharacterInterface>(Other)->ApplyPunchForceToCharacter(GetActorLocation(), 100.f);
 	}
@@ -193,7 +195,7 @@ void AHopperBaseCharacter::HandlePunch_Implementation()
 					UE_LOG(LogHopper, Log, TEXT("Found IsDead"))
 					continue;
 				}
-				
+
 				UE_LOG(LogHopper, Log, TEXT("Applying Punch Force"))
 				Cast<IHopperCharacterInterface>(Actor)->ApplyPunchForceToCharacter(GetActorLocation(), AttackForce);
 
@@ -203,7 +205,7 @@ void AHopperBaseCharacter::HandlePunch_Implementation()
 				Payload.Target = Actor;
 				Payload.TargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(Actor);
 				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetInstigator(), Tag, Payload);
-				
+
 				++Count;
 			}
 		}
