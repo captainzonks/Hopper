@@ -10,14 +10,19 @@ public class Hopper : ModuleRules
 
 		// Core
 		PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore"});
-		PrivateDependencyModuleNames.AddRange(new string[] {"AIModule", "Slate", "SlateCore"});
 
 		// Gameplay Ability System
 		PublicDependencyModuleNames.AddRange(new string[] {"GameplayAbilities", "GameplayTags", "GameplayTasks"});
 
 		// Automation Dependencies
 		PublicDependencyModuleNames.AddRange(new string[] {"UnrealEd"});
-
+		
+		// UI
+		PrivateDependencyModuleNames.AddRange(new string[] {"Slate", "SlateCore"});
+		
+		// AI
+		PrivateDependencyModuleNames.AddRange(new string[] {"AIModule", "NavigationSystem"});
+		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 

@@ -13,6 +13,7 @@ class UHopperGameplayAbility;
 class UGameplayEffect;
 class UHopperAbilitySystemComponent;
 class UHopperAttributeSet;
+class UAIPerceptionComponent;
 class USphereComponent;
 
 /**
@@ -27,9 +28,9 @@ class HOPPER_API AHopperBaseCharacter : public APaperCharacter, public IAbilityS
 public:
 	AHopperBaseCharacter();
 
-	/*********************************
-	*           Getters
-	*********************************/
+	/**********************************
+	 *           Getters
+	 **********************************/
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable)
@@ -40,9 +41,9 @@ public:
 	virtual float GetMaxHealth() const;
 
 protected:
-	/*********************************
-	 *      Class Overrides
-	 *********************************/
+	/**********************************
+	 *         Class Overrides
+	 **********************************/
 
 	virtual void BeginPlay() override;
 	virtual void OnJumped_Implementation() override;
@@ -52,6 +53,9 @@ protected:
 	virtual void OnRep_PlayerState() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
+	                       FVector HitLocation, FVector HitNormal, FVector NormalImpulse,
+	                       const FHitResult& Hit) override;
 
 	/**********************************
 	 *         Ability System
@@ -112,9 +116,9 @@ protected:
 	/** Friended to allow access to handle functions */
 	friend UHopperAttributeSet;
 
-	/*********************************
-	 *         Combat
-	********************************/
+	/**********************************
+	 *            Combat
+	 **********************************/
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Actions")
 	void HandlePunch();
@@ -136,9 +140,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void ApplyPunchForceToCharacter(const FVector FromLocation, const float InAttackForce) const override;
 
-	/****************************
-	 *    Delegates & Events
-	 ***************************/
+	/**********************************
+	 *       Delegates & Events
+	 **********************************/
 
 	/**
 	 * Called upon movement, with a timer delay of 0.3 seconds.
@@ -177,16 +181,17 @@ protected:
 	FOnAttackTimerEnd OnAttackTimerEnd;
 	FOnAttackTimerEndNative OnAttackTimerEndNative;
 
-	/*************************
-	 *       Movement
-	 *************************/
+	/**********************************
+	 *           Movement
+	 **********************************/
 
 	void ModifyJumpPower();
 	void ResetJumpPower();
 
-	/************************
-	 *      Animation
-	 ************************/
+
+	/**********************************
+	 *           Animation
+	 **********************************/
 
 	/**
 	 * Animates the sprite with Editor-set Flipbooks for movement. This function is called

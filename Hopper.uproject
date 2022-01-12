@@ -12,7 +12,8 @@
 				"Paper2D",
 				"Engine",
 				"GameplayAbilities",
-				"UMG"
+				"UMG",
+				"AIModule"
 			]
 		}
 	],
